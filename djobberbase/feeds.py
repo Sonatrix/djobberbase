@@ -3,7 +3,7 @@
 from django.contrib.syndication.views import Feed
 from django.utils.feedgenerator import Rss201rev2Feed
 from django.shortcuts import get_object_or_404
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from djobberbase.models import Category, Job
 from djobberbase.conf.settings import DJOBBERBASE_SITE_NAME

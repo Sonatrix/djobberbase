@@ -32,12 +32,13 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'django.contrib.sites',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djobberbase',
+    'instajobs',
     'captcha'
 ]
 
@@ -56,7 +57,7 @@ ROOT_URLCONF = 'instantjobs.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -115,8 +116,28 @@ USE_L10N = True
 
 USE_TZ = True
 
+SITE_ID = 1
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+EMAIL_HOST = 'smtp.mydomain.com'
+EMAIL_HOST_USER = 'mailbox_username'
+EMAIL_HOST_PASSWORD = 'mailbox_password'
+DEFAULT_FROM_EMAIL = 'valid_email_address'
+SERVER_EMAIL = 'valid_email_address'
+
+#Djobberbase specific
+DJOBBERBASE_ADMIN_EMAIL = DEFAULT_FROM_EMAIL
+DJOBBERBASE_FILE_UPLOADS = MEDIA_ROOT
+# djobberbase settings
+DJOBBERBASE_MARKUP_LANGUAGE = 'textile'
+DJOBBERBASE_ADMIN_NOTIFICATIONS = True
+DJOBBERBASE_POSTER_NOTIFICATIONS = True
+DJOBBERBASE_APPLICATION_NOTIFICATIONS = True
+DJOBBERBASE_CAPTCHA_APPLICATION = 'simple'
+DJOBBERBASE_CAPTCHA_POST = 'simple'

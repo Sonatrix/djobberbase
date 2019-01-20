@@ -2,17 +2,17 @@
 
 from django import forms
 from djobberbase.models import Job, Category, Type, JobStat
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text as force_unicode
 from django.utils.safestring import mark_safe
 from djobberbase.conf import settings as djobberbase_settings
 from django.utils.translation import ugettext_lazy as _
 from datetime import datetime, timedelta
 
-class HorizRadioRenderer(forms.RadioSelect.renderer):
+class HorizRadioRenderer(forms.RadioSelect):
     """ this overrides widget method to put radio buttons horizontally
         instead of vertically.
     """
-    def render(self):
+    def render(self, name, value, attrs=None, renderer=None):
         """Outputs radios"""
         return mark_safe(u'\n'.join([u'%s\n' % w for w in self]))
 
@@ -22,7 +22,7 @@ class JobForm(forms.ModelForm):
         fields = ('category', 'jobtype', 'title', 'description', 'company', \
         'city', 'outside_location', 'url', 'poster_email', 'apply_online')
         widgets = {
-            'jobtype': forms.RadioSelect(renderer=HorizRadioRenderer),
+            'jobtype': forms.RadioSelect(attrs={'renderer': HorizRadioRenderer}),
             'title': forms.TextInput(attrs={'size':50}),
             'description': forms.Textarea(attrs={'rows':15, 'cols':80}),
             'city': forms.Select(attrs={'id':'city_id'}),
@@ -91,3 +91,4 @@ class ApplicationForm(forms.Form):
                 raise forms.ValidationError(_('Your resume/CV must not exceed the file size limit. (%(size)sMB)') % {'size': (permitted_size/1024)/1024})
 
         return cleaned_data          
+

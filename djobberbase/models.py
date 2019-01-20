@@ -42,6 +42,7 @@ class Category(models.Model):
     class Meta:
         verbose_name = _('Category')
         verbose_name_plural = _('Categories')
+        app_label = 'djobberbase'
 
     def get_total_jobs(self):
         return Job.active.filter(category=self).count()
@@ -157,6 +158,7 @@ class Job(models.Model):
     class Meta:
         verbose_name = _('Job')
         verbose_name_plural = _('Jobs')
+        app_label = 'djobberbase'
 
     def __unicode__(self):
         return self.title

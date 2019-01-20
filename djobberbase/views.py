@@ -3,9 +3,6 @@
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from djobberbase.models import Job, Category, Type, JobStat, JobSearch, City
 from djobberbase.postman import *
-from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import create_object, update_object
-from django.core.context_processors import csrf
 from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 from django.template import RequestContext
@@ -14,6 +11,21 @@ from djobberbase.forms import ApplicationForm, JobForm
 from djobberbase.conf import settings as djobberbase_settings
 from django.db.models import Count
 from django.http import Http404
+from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView, FormView
+from django.utils import timezone
+
+class JobListView(ListView):
+
+    model = Job
+    paginate_by = djobberbase_settings.DJOBBERBASE_JOBS_PER_PAGE  # if pagination is desired
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['now'] = timezone.now()
+        context['page_type'] = 'index'
+        return context
 
 def job_detail(request, job_id, joburl):
     ''' Displays an active job and its application form depending if 
@@ -37,9 +49,6 @@ def job_detail(request, job_id, joburl):
         mb = minutes_between()
         if job.apply_online and djobberbase_settings.\
             DJOBBERBASE_APPLICATION_NOTIFICATIONS:
-
-            # Add CSRF protection
-            extra_context.update(csrf(request))
 
             # If it's a job application
             if request.method == 'POST':
@@ -80,7 +89,7 @@ def job_detail(request, job_id, joburl):
         # Only display the job, without an application form
         else:
             queryset = Job.active.filter(joburl=joburl)
-            return object_detail(request, queryset=queryset,
+            return render(request, queryset=queryset,
                                 object_id=job_id,
                                 extra_context=extra_context)
 
@@ -96,7 +105,7 @@ def job_verify(request, job_id, auth):
     # show edit and cancelation buttons in the template
     extra_context = {'page_type':'verify', 
                'markup_lang': djobberbase_settings.DJOBBERBASE_MARKUP_LANGUAGE}
-    return object_detail(request, queryset=queryset, 
+    return render(request, queryset=queryset, 
                             object_id=job_id, extra_context=extra_context)
 
 def jobs_category(request, cvar_name=None, tvar_name=None):
@@ -117,6 +126,28 @@ def jobs_category(request, cvar_name=None, tvar_name=None):
                     extra_context=extra_context,
                     paginate_by=djobberbase_settings.DJOBBERBASE_JOBS_PER_PAGE)
 
+class JobsInCity(ListView):
+    ''' Display a job list by city and job type (optional).
+    '''
+
+    model = Job
+    paginate_by = djobberbase_settings.DJOBBERBASE_JOBS_PER_PAGE  # if pagination is desired
+    queryset = Job.active.all()
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        city = get_object_or_404(City, ascii_name=kwargs.get("city_name"))
+        queryset = queryset.filter(city=city)
+        context['now'] = timezone.now()
+        context['city'] = city
+
+        if kwargs.get("tvar_name") is not None:
+            jobtype = get_object_or_404(Type, var_name=kwargs.get("tvar_name"))
+            queryset = queryset.filter(jobtype=jobtype)
+            context['selected_jobtype'] = jobtype 
+        return context
+
 def jobs_in_city(request, city_name, tvar_name=None):
     ''' Display a job list by city and job type (optional).
     '''
@@ -127,15 +158,16 @@ def jobs_in_city(request, city_name, tvar_name=None):
         jobtype = get_object_or_404(Type, var_name=tvar_name)
         queryset = queryset.filter(jobtype=jobtype)
         extra_context['selected_jobtype'] = jobtype                     
-    return object_list(request, queryset=queryset,
+    return render(request, queryset=queryset,
                     extra_context=extra_context,
                     paginate_by=djobberbase_settings.DJOBBERBASE_JOBS_PER_PAGE)
+
 
 def jobs_in_other_cities(request):
     ''' Displays a list with jobs in cities outside.
     '''
     queryset = Job.active.filter(city=None)
-    return object_list(request, queryset=queryset)
+    return render(request, queryset=queryset)
 
 def companies(request):
     ''' Displays the companies that have active jobs
@@ -143,7 +175,7 @@ def companies(request):
     '''
     queryset = Job.active.values('company', 'company_slug') \
                .annotate(Count('company'))
-    return object_list(request, queryset=queryset,
+    return render(request, queryset=queryset,
                                 template_name='djobberbase/company_list.html')
 
 def jobs_at(request, company_slug, tvar_name=None):
@@ -154,7 +186,7 @@ def jobs_at(request, company_slug, tvar_name=None):
         jobtype = get_object_or_404(Type, var_name=tvar_name)
         queryset = queryset.filter(jobtype=jobtype)
         extra_context['selected_jobtype'] = jobtype    
-    return object_list(request, queryset=queryset)
+    return render(request, queryset=queryset)
 
 def job_confirm(request, job_id, auth):
     ''' A view to confirm a recently created job, if it has been published
@@ -188,7 +220,7 @@ def job_confirm(request, job_id, auth):
     if djobberbase_settings.DJOBBERBASE_ADMIN_NOTIFICATIONS:
         admin_email = MailPublishToAdmin(job, request)
         admin_email.start()
-    return object_detail(request, queryset=queryset,
+    return render(request, queryset=queryset,
                          object_id=job_id,
                          extra_context={'page_type':'confirm'})
                          
@@ -198,7 +230,7 @@ def job_edit(request, job_id, auth):
     job = get_object_or_404(Job, pk=job_id, auth=auth)
     if job.status not in (Job.ACTIVE, Job.TEMPORARY):
         raise Http404
-    return update_object(request, form_class=JobForm, object_id=job_id,
+    return render(request, form_class=JobForm, object_id=job_id,
            post_save_redirect='../../../'+
            djobberbase_settings.DJOBBERBASE_VERIFY_URL+'/%(id)d/%(auth)s/')
 
@@ -218,7 +250,7 @@ def job_activate(request, job_id, auth):
                              _('Your job has been activated.'))
         extra_context['page_type'] = 'activate'
     queryset=Job.active.all()
-    return object_detail(request, queryset=queryset, 
+    return render(request, queryset=queryset, 
                             object_id=job_id, extra_context=extra_context)
 
 def job_deactivate(request, job_id, auth):
@@ -233,7 +265,7 @@ def job_deactivate(request, job_id, auth):
                              _('Your job has been deactivated.'))
         extra_context['page_type'] = 'deactivate'
     queryset=Job.active.all()
-    return object_list(request, queryset=queryset,
+    return render(request, queryset=queryset,
                     extra_context=extra_context,
                     paginate_by=djobberbase_settings.DJOBBERBASE_JOBS_PER_PAGE)
 
@@ -256,6 +288,6 @@ def job_search(request):
                                      .order_by('-created_on')[:jobs_per_search]
         search = JobSearch(keywords=query_string)
         search.save()
-    return object_list(request, queryset=found_entries,
+    return render_to_response(request, queryset=found_entries,
                     extra_context=extra_context,
                     paginate_by=djobberbase_settings.DJOBBERBASE_JOBS_PER_PAGE)

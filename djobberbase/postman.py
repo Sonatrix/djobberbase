@@ -10,7 +10,7 @@ from djobberbase.conf import settings as djobberbase_settings
 from time import time
 import threading
 
-site_domain = Site.objects.get_current().domain
+site_domain = ".com" #Site.objects.get_current().domain
 
 class MailPublishToAdmin(threading.Thread):
 
