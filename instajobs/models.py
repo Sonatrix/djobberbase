@@ -125,6 +125,9 @@ class Job(models.Model):
     company = models.CharField('Company', max_length=150, blank=False)
     company_slug = models.SlugField(max_length=150,
                                             blank=False, editable=False)
+    sender = models.SlugField(max_length=150, default="instajobs",
+                                            blank=True, editable=False)
+    external_id = models.SlugField(max_length=150, blank=True, editable=False)
     city = models.ForeignKey(City, verbose_name='City', null=True, blank=True, on_delete=models.SET_NULL)
     outside_location = models.CharField('Outside location', max_length=150, blank=True)
     #url of the company
