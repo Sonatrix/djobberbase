@@ -9,6 +9,7 @@ django-simple-captcha = "*"
 textile = "*"
 markdown = "*"
 south = "*"
+django-pipeline = "*"
 
 [dev-packages]
 

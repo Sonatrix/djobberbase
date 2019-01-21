@@ -19,5 +19,5 @@ from instajobs import urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path('', include("instajobs.urls", namespace='instajobs')),
+    path('', include("instajobs.urls", namespace='instajobs')),
 ]

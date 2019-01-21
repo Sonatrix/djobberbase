@@ -71,6 +71,7 @@ class Type(models.Model):
     class Meta:
         verbose_name = 'Type'
         verbose_name_plural = 'Types'
+        app_label = 'instajobs'
 
     def __str__(self):
         return self.name
@@ -92,6 +93,7 @@ class City(models.Model):
     class Meta:
         verbose_name = 'City'
         verbose_name_plural = 'Cities'
+        app_label = 'instajobs'
 
     def get_total_jobs(self):
         return Job.active.filter(city=self).count()
